@@ -3,6 +3,7 @@
 
 gateway_url   = "opc.tcp://127.0.0.1:4840/"
 machine_id    = "howick-1"
+driver        = "howick-frama"
 namespace_uri = "http://joeblew999.github.io/factory-floor/"
 
 [howick]
