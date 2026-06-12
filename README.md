@@ -18,6 +18,7 @@ dev workspace. The code lives in the `factory-` family of repos.
 | [factory-machine-model](https://github.com/joeblew999/factory-machine-model) | the contract: OPC-UA Machinery + ISA-95 modelled in Rust, + the `MachineDriver` trait |
 | [factory-gateway](https://github.com/joeblew999/factory-gateway) | the OPC-UA server — one per factory; driver registry + ISA-95 job control |
 | [factory-howick-driver](https://github.com/joeblew999/factory-howick-driver) | the Howick FRAMA machine driver (first of many) |
+| [factory-edge-agent](https://github.com/joeblew999/factory-edge-agent) | runs a driver at the machine, connected to the gateway over OPC-UA (the distributed topology) |
 | `factory-<machine>-driver` | one per machine type — composed per factory |
 | [howick-rs](https://github.com/joeblew999/howick-rs) | the Howick cut-list / CSV payload library |
 
@@ -37,6 +38,15 @@ The **driver is the unit of variation**: each is an independently-versioned plug
 crate, and **each factory's config selects which drivers + machines it runs.** Add
 a machine type → a new driver crate. Add a factory → a new config file. The gateway
 never changes.
+
+**Deployment** — two modes per machine (set `edge` in config):
+- `edge = true` (real factory floor): the driver runs in a
+  [factory-edge-agent](https://github.com/joeblew999/factory-edge-agent) process
+  on the box wired to the machine; the gateway publishes jobs to it over OPC-UA
+  and it reports back. Machines can be physically distributed; a crashed agent
+  can't take down the rest.
+- `edge = false` (single co-located machine): the driver runs in-process in the
+  gateway. Simpler, no separate process.
 
 ## The OPC-UA structure (the standards we build on)
 
