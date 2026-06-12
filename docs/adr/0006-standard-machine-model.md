@@ -234,6 +234,26 @@ into the three contracts; move `/Howick` → `/Machines/<id>`; move
 `PiecesProduced`/`CoilRemaining` into `Telemetry`), verify the existing Howick
 pipeline still passes, **then** carve the workspace into the repos above.
 
+### Amendment (June 2026): develop as ONE workspace, defer the repo split
+
+Tried the physical split (`factory-machine-model` + scaffolded `factory-gateway`
+/ `factory-howick-driver`) and hit the multi-repo dev-loop cost: git-dependency
+round-trips put GitHub inside the inner edit→build→test loop. At this scale the
+split buys nothing (no external consumers, no separate access/versioning needs)
+and costs real iteration speed.
+
+**Decision:** keep the standard machine model exactly as designed, but realize it
+as **crates in a single cargo workspace**, not separate repos. The `MachineDriver`
+trait — not a repo boundary — is what makes machines pluggable. A new machine is a
+new **crate** (`crates/<machine>-driver/`), tested instantly against the gateway
+with no GitHub involvement. Extract a driver to its own repo only when a real
+external party needs it; the fix for the round-trip cost at that point is a
+dev-only cargo `[patch]` over local sibling checkouts (GitHub only at release).
+
+Repo status: `factory-machine-model` kept (clean standalone contract, may be
+published later); `factory-gateway` + `factory-howick-driver` **archived** (read-only,
+reversible) — premature. Wherever this ADR says "repo" above, read "crate" for now.
+
 ## Consequences
 
 - Adding a machine type = a new driver repo implementing `MachineDriver`. Zero
