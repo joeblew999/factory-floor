@@ -14,11 +14,8 @@
 #   Debug toggle:    mise run logs:debug / logs:normal
 #   Web UI:          http://localhost:19876 (or http://<device>:19876)
 #
-# Two pitchfork instances (tool isolation):
-#   Root:    pitchfork.toml       → opcua-server, howick-frama, mock-plat-trunk
-#   Speckle: tools/speckle-server/pitchfork.toml → postgres, redis, minio, api, frontend
-#
-# On production devices only root daemons exist. Speckle tasks are harmless no-ops.
+# Daemons live in pitchfork.toml → opcua-server, howick-frama, mock-plat-trunk.
+# (Speckle moved to its own repo: github.com/joeblew999/speckle)
 
 # ── Root daemon lifecycle ────────────────────────────────────────────────────
 
@@ -63,56 +60,6 @@ description = "Interactive pitchfork dashboard"
 raw = true
 interactive = true
 run = "pitchfork tui"
-
-# ── Speckle daemons (same pattern, different pitchfork instance) ─────────────
-# `mise x --` activates speckle tools (node, postgres, redis, minio).
-# All tasks gracefully no-op if tools/speckle-server/ doesn't exist.
-
-["speckle:start"]
-description = "Start Speckle daemons + check for errors"
-run = """
-cd ${OPCUA_ROOT:-$PWD}/tools/speckle-server 2>/dev/null || { echo "No speckle-server (production device)"; exit 0; }
-mise x -- pitchfork start -l
-mise run admin:ensure 2>/dev/null || true
-echo "Speckle running — http://127.0.0.1:8080"
-"""
-depends_post = ["speckle:logs:errors"]
-
-["speckle:stop"]
-description = "Stop Speckle daemons"
-run = "cd ${OPCUA_ROOT:-$PWD}/tools/speckle-server 2>/dev/null && mise x -- pitchfork stop --all || true"
-
-["speckle:restart"]
-description = "Restart Speckle daemons"
-run = [
-  { task = "speckle:stop" },
-  { task = "speckle:start" },
-]
-
-["speckle:logs"]
-description = "Stream Speckle daemon logs"
-raw = true
-run = "cd ${OPCUA_ROOT:-$PWD}/tools/speckle-server 2>/dev/null && mise x -- pitchfork logs -t || echo 'No speckle-server'"
-
-["speckle:status"]
-description = "Speckle daemon status + health checks"
-run = """
-cd ${OPCUA_ROOT:-$PWD}/tools/speckle-server 2>/dev/null || { echo "No speckle-server (production device)"; exit 0; }
-mise x -- pitchfork list
-echo ""
-echo "Health:"
-pg_isready -U speckle >/dev/null 2>&1 && echo "  Postgres  ✓" || echo "  Postgres  ✗"
-redis-cli ping >/dev/null 2>&1 && echo "  Redis     ✓" || echo "  Redis     ✗"
-curl -sf http://127.0.0.1:9000/minio/health/live >/dev/null 2>&1 && echo "  MinIO     ✓" || echo "  MinIO     ✗"
-curl -sf http://127.0.0.1:3000/graphql >/dev/null 2>&1 && echo "  API       ✓" || echo "  API       ✗"
-curl -sf -o /dev/null http://127.0.0.1:8080 2>/dev/null && echo "  Frontend  ✓" || echo "  Frontend  ✗"
-"""
-
-["speckle:tui"]
-description = "Speckle pitchfork dashboard"
-raw = true
-interactive = true
-run = "cd ${OPCUA_ROOT:-$PWD}/tools/speckle-server 2>/dev/null && mise x -- pitchfork tui || echo 'No speckle-server'"
 
 # ── Log management ───────────────────────────────────────────────────────────
 
@@ -162,34 +109,6 @@ description = "Restart daemons with default log level"
 run = [
   { task = "restart" },
   "echo 'Logging reverted to default level'",
-]
-
-["speckle:logs:recent"]
-description = "Last 5 minutes of Speckle logs"
-run = "cd ${OPCUA_ROOT:-$PWD}/tools/speckle-server 2>/dev/null && mise x -- pitchfork logs --since 5min --no-pager || true"
-
-["speckle:logs:errors"]
-description = "Grep Speckle logs for errors"
-run = "cd ${OPCUA_ROOT:-$PWD}/tools/speckle-server 2>/dev/null && mise x -- pitchfork logs --raw --no-pager | grep -iE 'error|panic|fatal' || echo 'No errors'"
-
-# ── All daemons ──────────────────────────────────────────────────────────────
-
-["start:all"]
-description = "Start everything — dev stack + speckle"
-run = [{ task = "start" }, { task = "speckle:start" }]
-
-["stop:all"]
-description = "Stop everything — dev stack + speckle"
-run = [{ task = "stop" }, { task = "speckle:stop" }]
-
-["status:all"]
-description = "Status of all daemons"
-run = [
-  "echo '── Dev stack ──'",
-  { task = "status" },
-  "echo ''",
-  "echo '── Speckle ──'",
-  { task = "speckle:status" },
 ]
 
 # ── Secrets (works on every device) ──────────────────────────────────────────
