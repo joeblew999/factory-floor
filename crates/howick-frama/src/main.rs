@@ -38,6 +38,7 @@
 
 use opcua_howick::{config, http_poller, machine, updater, VERSION};
 
+mod driver;
 mod edge_agent;
 use edge_agent::{opcua_client, sensor};
 

@@ -17,5 +17,6 @@ pub const VERSION: &str = concat!(
 pub mod config;
 pub mod http_poller;
 pub mod machine;
+pub mod machine_model;
 pub mod updater;
 pub mod usb_gadget;
