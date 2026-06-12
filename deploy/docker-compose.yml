@@ -1,0 +1,30 @@
+# The whole factory stack, one command:
+#
+#   docker compose up --build
+#
+# Images build straight from GitHub — no need to clone any other repo.
+# Same file runs on your laptop and on a real factory server.
+
+services:
+  # The brain — one OPC-UA gateway per factory. Dashboard on :4841.
+  gateway:
+    build: https://github.com/joeblew999/factory-gateway.git#main
+    ports:
+      - "4840:4840"   # OPC-UA
+      - "4841:4841"   # dashboard + job submit  →  http://localhost:4841/
+    volumes:
+      - ./gateway.toml:/config/gateway.toml:ro
+    restart: unless-stopped
+
+  # The worker at the machine — drives howick-1, writes cut-lists to the volume.
+  edge-agent:
+    build: https://github.com/joeblew999/factory-edge-agent.git#main
+    depends_on:
+      - gateway
+    volumes:
+      - ./agent.toml:/config/agent.toml:ro
+      - cutlists:/cutlists      # stand-in for the machine's USB mount
+    restart: unless-stopped
+
+volumes:
+  cutlists:

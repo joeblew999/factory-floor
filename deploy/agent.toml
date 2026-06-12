@@ -1,0 +1,8 @@
+gateway_url   = "opc.tcp://gateway:4840/"   # the compose service name
+machine_id    = "howick-1"
+namespace_uri = "http://joeblew999.github.io/factory-floor/"
+
+[howick]
+usb_mount       = "/cutlists"   # the shared volume (the machine's USB mount)
+usb_gadget_mode = false
+coil_sensor     = false

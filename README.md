@@ -9,20 +9,24 @@ machine starts making it. That's the whole thing.
    you drop a cut-list  ───►  gateway  ───►  the machine makes it
 ```
 
-It works today. To see the whole thing run on your own computer — **one command**:
+It works today. **One command** runs the whole thing (and it's the same command to
+deploy it on a real factory server):
 
 ```bash
-cd run
-mise run try     # builds + starts everything + sends a test cut-list + shows it arrive
+cd deploy
+docker compose up --build
 ```
 
-Then when you're done:
+Then open **http://localhost:4841/** and send a test cut-list:
 
 ```bash
-mise run down    # stops it
+curl -X POST http://localhost:4841/jobs/howick-1 --data-binary $'UNIT,MILLIMETRE\nW1,4740\n'
 ```
 
-(Or step by step: `mise run up`, `mise run demo`, `mise run down`.)
+Stop with `docker compose down`. Full details: **[deploy/](deploy/)**.
+
+> No Docker? There's also a dev runner in [`run/`](run/) (`mise run try`) — but
+> Docker is the proper way to run and deploy.
 
 ---
 

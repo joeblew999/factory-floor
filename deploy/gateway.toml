@@ -1,0 +1,22 @@
+[factory]
+id   = "demo"
+name = "Demo Factory"
+
+[opcua]
+host          = "0.0.0.0"
+port          = 4840
+endpoint_host = "gateway"     # the compose service name, so edge-agent can reach it
+
+[http]
+host = "0.0.0.0"
+port = 4841
+
+[[machine]]
+id     = "howick-1"
+driver = "howick-frama"
+edge   = true                 # run by the edge-agent container
+
+[machine.identification]
+manufacturer  = "Howick"
+model         = "FRAMA"
+serial_number = "FR-DEMO-1"
