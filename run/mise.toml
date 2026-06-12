@@ -8,6 +8,10 @@
 # Binaries are built from the sibling family repos checked out next to this one
 # (../../factory-gateway, ../../factory-edge-agent).
 
+[tasks.try]
+description = "THE ONE COMMAND: build, start everything, send a test cut-list, show it reach the machine"
+run = [{ task = "up" }, { task = "demo" }]
+
 [tasks.build]
 description = "Build the gateway + edge-agent binaries from the sibling repos"
 run = [

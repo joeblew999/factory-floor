@@ -9,14 +9,20 @@ machine starts making it. That's the whole thing.
    you drop a cut-list  ───►  gateway  ───►  the machine makes it
 ```
 
-It works today. To see it run on your own computer:
+It works today. To see the whole thing run on your own computer — **one command**:
 
 ```bash
 cd run
-mise run up      # starts the factory software
-mise run demo    # sends a cut-list and shows it reach the machine
+mise run try     # builds + starts everything + sends a test cut-list + shows it arrive
+```
+
+Then when you're done:
+
+```bash
 mise run down    # stops it
 ```
+
+(Or step by step: `mise run up`, `mise run demo`, `mise run down`.)
 
 ---
 
