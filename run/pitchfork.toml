@@ -1,0 +1,22 @@
+#:schema https://pitchfork.jdx.dev/schema.json
+# Run the factory-floor stack locally: gateway + one edge agent.
+# Binaries are built from the sibling family repos (see mise.toml `build`).
+#   mise run up      # build + start both daemons
+#   mise run demo    # submit a cut-list and watch it reach the machine
+#   mise run down    # stop
+
+[daemons.gateway]
+run = "../../factory-gateway/target/debug/factory-gateway --config gateway.toml"
+ready_http = "http://127.0.0.1:4841/health"
+expected_port = [4840, 4841]
+retry = false
+auto = ["start", "stop"]
+hooks.on_ready = "echo '✓ gateway ready — opc.tcp://127.0.0.1:4840/ + http://127.0.0.1:4841/'"
+
+[daemons.edge-agent]
+run = "../../factory-edge-agent/target/debug/factory-edge-agent --config agent.toml"
+depends = ["gateway"]
+ready_delay = 3
+retry = false
+auto = ["start", "stop"]
+hooks.on_ready = "echo '✓ edge-agent ready — driving howick-1 over OPC-UA'"

@@ -1,0 +1,11 @@
+# factory-edge-agent config for the local run harness.
+# Connects to the gateway and drives howick-1; writes cut-lists to /tmp/factory-usb.
+
+gateway_url   = "opc.tcp://127.0.0.1:4840/"
+machine_id    = "howick-1"
+namespace_uri = "http://joeblew999.github.io/factory-floor/"
+
+[howick]
+usb_mount       = "/tmp/factory-usb"   # stand-in for the FRAMA's USB mount
+usb_gadget_mode = false
+coil_sensor     = false

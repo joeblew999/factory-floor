@@ -1,0 +1,25 @@
+# factory-gateway config for the local run harness.
+# One Howick machine, run by a remote edge agent (the real distributed topology).
+
+[factory]
+id   = "demo"
+name = "Demo Factory"
+
+[opcua]
+host = "127.0.0.1"
+port = 4840
+
+[http]
+host = "127.0.0.1"
+port = 4841
+
+[[machine]]
+id     = "howick-1"
+driver = "howick-frama"
+edge   = true                     # run by factory-edge-agent over OPC-UA
+
+[machine.identification]
+manufacturer  = "Howick"
+model         = "FRAMA"
+serial_number = "FR-DEMO-1"
+device_class  = "RollFormer"

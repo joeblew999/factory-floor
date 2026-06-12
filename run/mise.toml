@@ -1,0 +1,65 @@
+# Run the whole factory-floor stack locally with mise + pitchfork.
+#   mise run up      # build the family binaries + start gateway & edge-agent
+#   mise run demo    # POST a cut-list, show it reach the machine over OPC-UA
+#   mise run status  # daemon + machine status
+#   mise run logs    # daemon logs
+#   mise run down    # stop everything
+#
+# Binaries are built from the sibling family repos checked out next to this one
+# (../../factory-gateway, ../../factory-edge-agent).
+
+[tasks.build]
+description = "Build the gateway + edge-agent binaries from the sibling repos"
+run = [
+  "cargo build --manifest-path ../../factory-gateway/Cargo.toml",
+  "cargo build --manifest-path ../../factory-edge-agent/Cargo.toml",
+]
+
+[tasks.up]
+description = "Start gateway + edge-agent as pitchfork daemons"
+depends = ["build"]
+# Explicit names (not -l) so we don't pick up the legacy root pitchfork.toml daemons.
+run = "pitchfork start gateway edge-agent -f"
+
+[tasks.down]
+description = "Stop the daemons"
+run = "pitchfork stop gateway edge-agent"
+
+[tasks.status]
+description = "Daemon status + live machine status from the gateway"
+run = [
+  "pitchfork list",
+  "curl -s http://127.0.0.1:4841/status | tee /dev/stderr >/dev/null",
+]
+
+[tasks.logs]
+description = "Tail daemon logs"
+run = "pitchfork logs gateway edge-agent"
+
+[tasks.demo]
+description = "Submit a cut-list and verify it reaches the machine"
+run = '''
+set -e
+rm -rf /tmp/factory-usb          # clean slate so we verify THIS job
+echo "→ POST a cut-list to howick-1 (HTTP → ISA-95 StoreAndStart):"
+curl -s -X POST http://127.0.0.1:4841/jobs/howick-1 --data-binary $'UNIT,MILLIMETRE\nW1,4740\n'
+echo
+echo "→ waiting for the edge agent to deliver it to the machine..."
+for i in $(seq 1 40); do
+  f=$(ls /tmp/factory-usb/*.csv 2>/dev/null | head -1 || true)
+  [ -n "$f" ] && break
+  sleep 0.25
+done
+echo "→ cut-list on the machine ($f):"
+cat "$f"
+echo "→ gateway machine status:"
+curl -s http://127.0.0.1:4841/status
+echo
+'''
+
+[tasks.clean]
+description = "Stop daemons and clear the demo USB mount"
+run = [
+  "pitchfork stop gateway edge-agent || true",
+  "rm -rf /tmp/factory-usb",
+]
