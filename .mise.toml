@@ -15,7 +15,6 @@ includes = [
   ".mise/tasks/dev.toml",
   ".mise/tasks/build.toml",
   ".mise/tasks/device.toml",
-  ".mise/tasks/speckle.toml",
 ]
 
 [tools]
