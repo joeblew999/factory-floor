@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-set -euo pipefail
-
-mkdir -p "$SPECKLE_LOGS"
-cd "$SPECKLE_SRC"
-echo "Building Speckle server (production)..."
-NODE_ENV=production yarn build 2>&1 | tee "$SPECKLE_LOGS/build.log"
-echo ""
-echo "Build complete."
