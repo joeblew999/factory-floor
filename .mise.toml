@@ -6,6 +6,7 @@
 # Task scripts (bash) live in .mise/tasks/<group>/<name>.
 
 [settings]
+idiomatic_version_file_enable_tools = ["rust"]
 task.timings = true
 task.output = "prefix"
 
@@ -22,7 +23,7 @@ pandoc    = "latest"
 typst     = "latest"
 jq        = "latest"
 pitchfork = "latest"
-hk        = "latest"
+hk        = "1.39.0"
 fnox      = "latest"
 pkl       = "latest"
 "cargo:cargo-binstall" = "latest"
