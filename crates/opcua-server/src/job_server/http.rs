@@ -122,8 +122,6 @@ async fn handle_connection(
             } else {
                 tokio::fs::create_dir_all(job_input_dir).await?;
                 let dest = job_input_dir.join(&filename);
-                tokio::fs::write(&dest, csv.as_bytes()).await?;
-                tracing::info!("Uploaded: {} → {}", filename, dest.display());
 
                 let frameset_name = filename.trim_end_matches(".csv").to_string();
                 let job_id = format!(
@@ -135,16 +133,26 @@ async fn handle_connection(
                         .unwrap_or(0)
                 );
 
+                // Queue BEFORE writing the file: the job watcher reacts to the
+                // file appearing and skips files already queued, so writing
+                // first let it race in and queue the same upload a second time.
                 use opcua_howick::machine::Job;
-                let mut s = state.write().await;
-                s.last_upload_at = Some(SystemTime::now());
-                s.job_queue.push(Job {
-                    id: job_id.clone(),
-                    frameset_name: frameset_name.clone(),
-                    csv_path: dest,
-                    submitted_at: SystemTime::now(),
-                });
-                tracing::info!("Job {} queued (depth: {})", job_id, s.job_queue.len());
+                {
+                    let mut s = state.write().await;
+                    s.last_upload_at = Some(SystemTime::now());
+                    s.job_queue.push(Job {
+                        id: job_id.clone(),
+                        frameset_name: frameset_name.clone(),
+                        csv_path: dest.clone(),
+                        submitted_at: SystemTime::now(),
+                    });
+                    tracing::info!("Job {} queued (depth: {})", job_id, s.job_queue.len());
+                }
+                if let Err(e) = tokio::fs::write(&dest, csv.as_bytes()).await {
+                    state.write().await.job_queue.retain(|j| j.id != job_id);
+                    return Err(e.into());
+                }
+                tracing::info!("Uploaded: {} → {}", filename, dest.display());
 
                 let body =
                     format!(r#"{{"ok":true,"frameset_name":"{frameset_name}","queued":true}}"#);

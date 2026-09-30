@@ -9,9 +9,11 @@ local linters = new Mapping<String, Step> {
     ["trailing_whitespace"] = Builtins.trailing_whitespace
     ["check_merge_conflict"] = Builtins.check_merge_conflict
     ["detect_private_key"] = Builtins.detect_private_key
-    // fnox secret scan — catch leaked secrets before commit
+    // fnox secret scan — catch leaked secrets before commit. Test code is
+    // skipped: its dummy api_key values are fixtures, and fnox can only ignore
+    // whole files, not single lines.
     ["secret_scan"] {
-        check = "fnox scan"
+        check = "fnox scan --ignore '**/tests/**'"
     }
 }
 

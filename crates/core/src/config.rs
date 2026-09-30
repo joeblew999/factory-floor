@@ -122,7 +122,7 @@ impl Default for SensorConfig {
 /// Topology A (Cloud):  url = "https://your-worker.workers.dev"
 /// Topology B (LAN):    url = "http://localhost:3000"
 /// Topology C (Hybrid): url = "http://localhost:3000"
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PlatTrunkConfig {
     pub url: String,
     pub api_key: String,
@@ -151,8 +151,9 @@ impl Default for Config {
             },
             plat_trunk: PlatTrunkConfig {
                 url: "http://localhost:3000".to_string(),
-                api_key: String::new(),
                 status_push_interval_secs: 5,
+                // api_key: empty by default (set in config / env)
+                ..Default::default()
             },
             sensor: SensorConfig::default(),
         }

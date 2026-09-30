@@ -5,7 +5,7 @@
 //!   GET  /api/jobs/howick/pending          → serves real fixture CSVs in order, then empty
 //!   POST /api/jobs/howick/{id}/complete    → acknowledges completion, advances queue
 //!
-//! Job queue (from dev/fixtures/):
+//! Job queue (from crates/fixtures/):
 //!   1. T1.csv  — roof truss,  22 components, 3945mm chords
 //!   2. W1.csv  — wall frame,  42 components, 4740mm plates
 //!
@@ -32,12 +32,12 @@ const JOBS: &[Job] = &[
     Job {
         id: "dev-001",
         frameset: "T1",
-        fixture: "dev/fixtures/T1.csv",
+        fixture: "crates/fixtures/T1.csv",
     },
     Job {
         id: "dev-002",
         frameset: "W1",
-        fixture: "dev/fixtures/W1.csv",
+        fixture: "crates/fixtures/W1.csv",
     },
 ];
 

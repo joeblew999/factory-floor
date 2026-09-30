@@ -66,10 +66,16 @@ async fn handle_new_job(csv_path: &Path, state: &SharedState) -> anyhow::Result<
         .unwrap_or("unknown")
         .to_string();
 
-    // Skip if this file is already queued (e.g. dashboard upload already added it)
+    // Skip if this file is already queued (e.g. dashboard upload already added it).
+    // Compare file names, not full paths: the watcher reports the resolved path
+    // (macOS: /private/var/...) while the upload handler used the symlinked one
+    // (/var/...), so a full-path compare never matched and queued it twice.
     {
         let s = state.read().await;
-        if s.job_queue.iter().any(|j| j.csv_path == csv_path) {
+        if s.job_queue
+            .iter()
+            .any(|j| j.csv_path.file_name() == csv_path.file_name())
+        {
             tracing::debug!(
                 "Skipping {} — already queued by upload handler",
                 csv_path.display()

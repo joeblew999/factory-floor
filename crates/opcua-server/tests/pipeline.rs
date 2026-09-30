@@ -22,16 +22,19 @@ use opcua_server::job_server::watcher::run_job_watcher;
 
 // ── Fixture CSV ────────────────────────────────────────────────────────────────
 
-const T1_CSV: &str = include_str!("../../../dev/fixtures/T1.csv");
+const T1_CSV: &str = include_str!("../../fixtures/T1.csv");
 
 // ── Test helpers ───────────────────────────────────────────────────────────────
 
 static COUNTER: AtomicUsize = AtomicUsize::new(0);
 
-/// Returns unique temp input and machine directories for this test run.
+/// Returns fresh, empty temp input and machine directories for this test.
+/// Keyed by pid as well as counter, and wiped first, so files left by an
+/// earlier run can never leak into this one's job queue.
 fn test_dirs() -> (std::path::PathBuf, std::path::PathBuf) {
     let n = COUNTER.fetch_add(1, Ordering::SeqCst);
-    let base = std::env::temp_dir().join(format!("howick-test-{n}"));
+    let base = std::env::temp_dir().join(format!("howick-test-{}-{n}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&base);
     (base.join("input"), base.join("machine"))
 }
 
@@ -46,8 +49,8 @@ fn make_config(job_input_dir: std::path::PathBuf, machine_input_dir: std::path::
         machine: MachineConfig {
             machine_name: "Test FRAMA".into(),
             job_input_dir,
+            machine_output_dir: machine_input_dir.with_file_name("output"),
             machine_input_dir,
-            machine_output_dir: std::env::temp_dir().join("howick-test-out"),
             usb_gadget_mode: false,
         },
         http: HttpConfig {
@@ -195,20 +198,27 @@ async fn upload_queue_agent_poll_complete() {
         .await
         .unwrap();
     assert_eq!(done.status(), 200);
-    sleep(Duration::from_millis(500)).await; // let server flush state before next read
 
-    // 5. Dashboard shows job completed, queue empty
-    let jobs: serde_json::Value = client
-        .get(format!("http://{addr}/jobs"))
-        .send()
-        .await
-        .unwrap()
-        .json()
-        .await
-        .unwrap();
+    // 5. Dashboard shows job completed, queue empty. The server flushes state
+    // asynchronously, so poll (up to 5s) rather than sleep a fixed amount.
+    let mut jobs = serde_json::Value::Null;
+    for _ in 0..50 {
+        jobs = client
+            .get(format!("http://{addr}/jobs"))
+            .send()
+            .await
+            .unwrap()
+            .json()
+            .await
+            .unwrap();
+        if jobs["queued"].as_array().unwrap().is_empty() {
+            break;
+        }
+        sleep(Duration::from_millis(100)).await;
+    }
     assert!(
         jobs["queued"].as_array().unwrap().is_empty(),
-        "queue should be empty"
+        "queue should be empty, got {jobs}"
     );
     assert!(
         !jobs["completed"].as_array().unwrap().is_empty(),
