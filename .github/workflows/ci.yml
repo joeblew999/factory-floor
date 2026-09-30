@@ -17,9 +17,8 @@ jobs:
     name: CI
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: dtolnay/rust-toolchain@stable
 
       - uses: actions/cache@v4
         with:
@@ -30,14 +29,16 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-
 
-      - uses: jdx/mise-action@v2
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
         with:
           install: false
 
       # Run gate tasks sequentially — parallel mise depends causes rustup
       # component download races that fail with "No such file or directory"
+      - name: Add Rust target
+        run: rustup target add ${{ matrix.target }}
       - run: mise run check
-      - run: mise run fmt-check
+      - run: cargo fmt --all -- --check
       - run: mise run test
 
   # ── Binary builds ─────────────────────────────────────────────────────────
@@ -94,11 +95,8 @@ jobs:
             bin: howick-frama
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.target }}
 
       - uses: actions/cache@v4
         with:
@@ -109,7 +107,7 @@ jobs:
           key: ${{ runner.os }}-${{ matrix.target }}-${{ matrix.bin }}-${{ hashFiles('Cargo.lock') }}
           restore-keys: ${{ runner.os }}-${{ matrix.target }}-
 
-      - uses: jdx/mise-action@v2
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
         with:
           install: false
 
